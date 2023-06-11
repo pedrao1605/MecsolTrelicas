@@ -1,95 +1,184 @@
 #include <stdio.h>
-#include <math.h>
-#define PI 3.14
-
-int pontos(char p){
-  int p1;
-
-  if(p=='a' || p=='A'){
-    p1=0;
-  }
-  if(p=='b' || p=='B'){
-    p1=1;
-  }
-  if(p=='c' || p=='C'){
-    p1=2;
-  }
-  if(p=='d' || p=='D'){
-    p1=3;
-  }
-  if(p=='e' || p=='E'){
-    p1=4;
-  }
-  if(p=='f' || p=='F'){
-    p1=5;
-  }
-  return p1;
-}
 
 int main(void) {
-  int m, n,x,y, t1, t2, p1, p2;
-  char pA, pB, di, cb, de;
-  printf("Informe a quantidade de nós que deseja ter na sua treliça: ");
-  scanf("%i", &m);
-  float valores[1][1][m][m], valor=123456, angulo, seno, cosseno;
+int x,xx=0, y, m=3, n=3, test=0,teste=0,o=0, x1=0,w,z, y2, o2, x2, yy=0;
 
-  // 1 é horizontal
-  // 0 é vertical
-  
-  while(pA!='z' && pA!='Z'){
-  getchar();
-  printf("Informe os pontos da treliça: ");
-  scanf("%c%c", &pA, &pB);
-  if(pA!='z' && pA!='Z'){
-  p1=pontos(pA);
-  p2=pontos(pB);
-  //printf("\n\nP1: %i\n\n", p1);
-  //printf("\n\nP2: %i\n\n", p2);
-  
-  printf("Ele é em diagonal, vertical ou horizontal? ");
-  getchar();
-  scanf("%c", &di);
-  printf("Para baixo ou para cima? ");
-  getchar();
-  scanf("%c", &cb);
-  printf("Para direita ou para esquerda? ");
-  getchar();
-  scanf("%c", &de);
-  printf("Qual o seu valor? ");
-  scanf("%f", &valor); 
+float matrizy[3][3]={0}, matriz1y[3][3]={2}, matrizx[3][3]={0}, matriz1x[3][3]={2},angulox[3][3]={1}, anguloy[3][3]={1}, soma=0;
 
-  printf("\n%c \t%.2f\n", di, valor);
-  if(di=='d'){
-    printf("Qual o angulo formado? ");
-    scanf("%f", &angulo);
 
-    seno=sin(angulo*PI/180);
-    cosseno=cos(angulo*PI/180);
-
-    if(valor==123456){
-    if(cb=='c'){
-      valores[1][0][p1][p2]=seno;
-      valores[1][1][p1][p2]=cosseno;
-    }
-    else{
-      valores[1][0][p1][p2]=cosseno;
-      valores[1][1][p1][p2]=seno;
-    }
-    }
-    else{
-      valores[1][0][p1][p2]=valor;
-      valores[1][1][p1][p2]=valor;
-    }
+  for(x=0;x<m;x++){
+  for(y=0;y<n;y++){
+    matrizy[x][y]=0;
+    matrizx[x][y]=0;
+    matriz1y[x][y]=2;
+    matriz1x[x][y]=2;
+    angulox[x][y]=1;
+    anguloy[x][y]=1;
+      
   }
+}
+  
+matrizy[0][0]=0;
+matrizy[0][1]=0;
+matrizy[1][0]=0;
+matrizy[2][1]=0;
+matrizy[1][2]=0;
+matrizy[2][2]=4;
+  
+
+matrizx[0][1]=0;
+matrizx[1][0]=0;
+matrizx[0][2]=0;
+matrizx[2][0]=0;
+
+matriz1y[0][0]=1;
+matriz1y[0][1]=1;
+matriz1y[1][0]=1;
+matriz1y[2][1]=1;
+matriz1y[1][2]=1;
+matriz1y[2][2]=0;
+
+matriz1x[0][1]=1;
+matriz1x[1][0]=1;
+matriz1x[0][2]=1;
+matriz1x[2][0]=1;
+
+
+
+angulox[1][0]=0.5;
+angulox[0][1]=0.5;
+anguloy[0][1]=0.5;
+anguloy[1][0]=0.5;
+
+
+
+while(matriz1x[0][2]==1){
+ for(x=0;x<m;x++){
+   for(y=0;y<n;y++){
+     if(matriz1y[x][y]==0){
+       yy++;
+     }
+     if(matriz1y[x][y]==1){
+       
+       xx++;
+       
+     }
+   }
+   
+   if(xx==1 && yy>0){
+     
+     test=1;
+   }
+   else{
+     test=0;
+   }
+   
+   if(test==1){
+   for(x1=0;x1<n;x1++){
+     if(matriz1y[x][x1]==1){
+       
+       for(o=0;o<n;o++){
+       soma=soma+matrizy[x][o];
+      
+       }
+          
+       soma=soma/anguloy[x][x1];
+       
+       matrizy[x][x1]=soma*-1;
+       matrizy[x1][x]=soma;
+       
+       matriz1y[x][x1]=0;
+       matriz1y[x1][x]=0;
+
+       if(anguloy[x][x1]>0 && anguloy[x][x1]<1){
+         matrizx[x][x1]=matrizy[x][x1]*angulox[x][x1];
+         matrizx[x1][x]=matrizx[x][x1]*-1;
+         matriz1x[x1][x]=0;
+         matriz1x[x][x1]=0;
+       }
+       
+       
+     }
+   }
+     
+   }
+   xx=0;
+   yy=0;
+   test=0;
+   soma=0;
+
+   for(y2=0;y2<n;y2++){
+     if(matriz1x[x][y2]==0){
+       yy++;
+     }
+     
+     if(matriz1x[x][y2]==1){
+       
+       xx++;
+       
+     }
+   }
+   
+   if(xx==1 && yy>0){
+     test=1;
+   }
+   else{
+     test=0;
+   }
+   
+   if(test==1){
+   for(x2=0;x2<n;x2++){
+     if(matriz1x[x][x2]==1){
+       
+       for(o2=0;o2<n;o2++){
+       
+       soma=soma+matrizx[x][o2];
+      
+       }
+       
+        
+       soma=soma/angulox[x][x2];
+      
+     
+       matrizx[x][x2]=soma*-1;
+       matrizx[x2][x]=soma;
+       matriz1x[x][x2]=0;
+       matriz1x[x2][x]=0;
+
+       
+       
+       if(angulox[x][x2]>0 && angulox[x][x2]<1){
+         matrizy[x][x2]=matrizx[x][x2]*anguloy[x][x2];
+         matrizy[x2][x]=matrizy[x][x2]*-1;
+         matriz1y[x][x2]=0;
+         matriz1y[x2][x]=0;
+       }
+       
+     }
+   }
+     
+   }
+   xx=0;
+   yy=0;
+   test=0;
+   soma=0;
+   
+   }
+}
+  
+  printf("%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f",matrizy[0][0],
+matrizy[0][1],
+matrizy[0][2],
+matrizy[1][0],
+matrizy[1][1],
+matrizy[1][2],
+matrizy[2][0],
+matrizy[2][1],
+matrizx[0][2],
+matrizx[2][0]
     
-    if(di=='h'){
-      valores[0][1][p1][p2]=valor;     
-    }
-    if(di=='v'){
-      valores[0][0][p1][p2]=valor;
-    }
-  }
-  };
-  
+ );
+
+   
   return 0;
 }
