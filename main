@@ -207,29 +207,70 @@ plt.axis([x_min, x_max, y_min, y_max])  # Ajustar limites dos eixos
 for i, name in enumerate(elements["Name"]):
     x_coord = [joints["X"][name[0]], joints["X"][name[1]]]
     y_coord = [joints["Y"][name[0]], joints["Y"][name[1]]]
-    plt.plot(x_coord, y_coord, "k-")
     
-
+    value = elements["Value"][i]
     
-    if elements["Value"][i] is not None:
+    if value is not None:
         midpoint_x = mean(x_coord)
         midpoint_y = mean(y_coord)
-        plt.text(midpoint_x, midpoint_y, str(elements["Value"][i]), color="b", fontsize=12, fontweight="bold")
         
+        if value > 0:
+            color = "blue"
+        elif value < 0:
+            color = "red"
+        else:
+            color = "green"
         
+        plt.text(midpoint_x, midpoint_y, str(value), color=color, fontsize=12, fontweight="bold")
         
-        
-        
-        
-       
+    plt.plot(x_coord, y_coord, "k-")
 
+# Função para verificar a interseção de dois segmentos de linha, ela recebe as coordenadas de dois elementos para teste
+def check_intersection(x1, y1, x2, y2, x3, y3, x4, y4):
+    # Cálculo da orientação dos pontos
+    def orientation(x1, y1, x2, y2, x3, y3):
+        return (y2 - y1) * (x3 - x2) - (y3 - y2) * (x2 - x1)
+
+    # Verificar se as orientações são diferentes e se os segmentos de linha se cruzam utilizando a formula do produto cruzado  para dois vetores bidimensionais, formula = ax*by-ay*bx
+    if (
+        orientation(x1, y1, x2, y2, x3, y3) * orientation(x1, y1, x2, y2, x4, y4) < 0
+        and orientation(x3, y3, x4, y4, x1, y1) * orientation(x3, y3, x4, y4, x2, y2) < 0 #verifica se as orientações dos segmentos de linha são diferentes e se os segmentos de linha se cruzam usando o teste de interseção baseado em orientação
+    ):
+        return True
+    else:
+        return False
+
+intersections = []  # Lista para armazenar os pares de elementos que se cruzam
+
+# Verificar interseções entre os segmentos de linha dos elementos
+for i, row1 in elements.iterrows():
+    x1 = joints.loc[row1["Start"], "X"]
+    y1 = joints.loc[row1["Start"], "Y"]
+    x2 = joints.loc[row1["End"], "X"]
+    y2 = joints.loc[row1["End"], "Y"]
+
+    for j, row2 in elements.iterrows():
+        if i != j:  # Evitar comparação de um elemento consigo mesmo
+            x3 = joints.loc[row2["Start"], "X"]
+            y3 = joints.loc[row2["Start"], "Y"]
+            x4 = joints.loc[row2["End"], "X"]
+            y4 = joints.loc[row2["End"], "Y"]
+
+            if check_intersection(x1, y1, x2, y2, x3, y3, x4, y4):
+                intersections.append((i, j))
+
+# Imprimir os pares de elementos que se cruzam
+if intersections:
+    print("\nA treliça não funcionará corretamente, devido ao cruzamento dos seguintes elementos:")
+    for pair in intersections:
+        print(f"Elemento {pair[0]} e Elemento {pair[1]}")
+else:
+    print("Não há pontos da treliça que se cruzam.")
+
+        
 # Plotar pontos externos
 external_joints = joints[joints["RX"].isnull() & joints["RY"].isnull()]
 plt.plot(external_joints["X"], external_joints["Y"], "bo")
-
-
-
-
 
 plt.xlabel("X")
 plt.ylabel("Y")
