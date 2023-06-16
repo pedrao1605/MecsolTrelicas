@@ -1,184 +1,238 @@
-#include <stdio.h>
+import pandas as pd
+import numpy as np
+from collections import Counter
+import operator
+import math
+import matplotlib.pyplot as plt
+from statistics import mean
 
-int main(void) {
-int x,xx=0, y, m=3, n=3, test=0,teste=0,o=0, x1=0,w,z, y2, o2, x2, yy=0;
+# Carregar dados
+elements = pd.read_excel("certo.xlsx", "elements")  # Elementos da treliça
+joints = pd.read_excel("certo.xlsx", "joints")  # Nós da treliça
 
-float matrizy[3][3]={0}, matriz1y[3][3]={2}, matrizx[3][3]={0}, matriz1x[3][3]={2},angulox[3][3]={1}, anguloy[3][3]={1}, soma=0;
+# Resolver reações
+X_reactions = joints["RX"].tolist()  # Reações na direção X
+Y_reactions = joints["RY"].tolist()  # Reações na direção Y
 
+x_index = [i for i, x in enumerate(X_reactions) if x == 1]  # Índice das reações na direção X
+y_index = [i for i, x in enumerate(Y_reactions) if x == 1]  # Índice das reações na direção Y
 
-  for(x=0;x<m;x++){
-  for(y=0;y<n;y++){
-    matrizy[x][y]=0;
-    matrizx[x][y]=0;
-    matriz1y[x][y]=2;
-    matriz1x[x][y]=2;
-    angulox[x][y]=1;
-    anguloy[x][y]=1;
-      
-  }
-}
-  
-matrizy[0][0]=0;
-matrizy[0][1]=0;
-matrizy[1][0]=0;
-matrizy[2][1]=0;
-matrizy[1][2]=0;
-matrizy[2][2]=4;
-  
+# Lista de equações
+if len(x_index) == 1:  # 2 Rx e 1 Ry
+    x_eq = [1, 0, 0]
+    y_eq = [0, 1, 1]
+else:  # 1 Rx e 1 Ry
+    x_eq = [1, 1, 0]
+    y_eq = [0, 0, 1]
 
-matrizx[0][1]=0;
-matrizx[1][0]=0;
-matrizx[0][2]=0;
-matrizx[2][0]=0;
+X_values = [-i for i in joints["FX"].tolist()]  # Valor das forças na direção X do outro lado do igual
+Y_values = [-i for i in joints["FY"].tolist()]  # Valor das forças na direção Y do outro lado do igual
 
-matriz1y[0][0]=1;
-matriz1y[0][1]=1;
-matriz1y[1][0]=1;
-matriz1y[2][1]=1;
-matriz1y[1][2]=1;
-matriz1y[2][2]=0;
+m_eq = []  # Lista para salvar a equação de momento
 
-matriz1x[0][1]=1;
-matriz1x[1][0]=1;
-matriz1x[0][2]=1;
-matriz1x[2][0]=1;
+for i in x_index:  # Reação em X multiplicada pela distância Y ao nó A: (0,0)
+    m_eq.append(-X_reactions[i] * joints["Y"].tolist()[i])
 
+for j in y_index:  # Reação em Y multiplicada pela distância X ao nó A: (0,0)
+    m_eq.append(Y_reactions[j] * joints["X"].tolist()[j])
 
+M_F_X = [a * b for a, b in zip(joints["FX"].tolist(), joints["Y"].tolist())]  # Momento das forças FX do outro lado do igual
+M_F_Y = [-a * b for a, b in zip(joints["FY"].tolist(), joints["X"].tolist())]  # Momento das forças FY do outro lado do igual
 
-angulox[1][0]=0.5;
-angulox[0][1]=0.5;
-anguloy[0][1]=0.5;
-anguloy[1][0]=0.5;
+a = np.array([x_eq, y_eq, m_eq])  # Lado esquerdo do sistema de equações
+b = np.array([sum(X_values), sum(Y_values), sum(M_F_Y) + sum(M_F_X)])  # Lado direito do sistema de equações
 
+R = np.linalg.solve(a, b).tolist()  # Solução das reações R1, R2 e R3
+print(a, b, R)
 
+# Substituir os valores das reações no dataframe
+for i, val_x in enumerate(X_reactions):
+    if val_x == 1:
+        X_reactions[i] = round(R[0], 2)
+        R.pop(0)
 
-while(matriz1x[0][2]==1){
- for(x=0;x<m;x++){
-   for(y=0;y<n;y++){
-     if(matriz1y[x][y]==0){
-       yy++;
-     }
-     if(matriz1y[x][y]==1){
-       
-       xx++;
-       
-     }
-   }
-   
-   if(xx==1 && yy>0){
-     
-     test=1;
-   }
-   else{
-     test=0;
-   }
-   
-   if(test==1){
-   for(x1=0;x1<n;x1++){
-     if(matriz1y[x][x1]==1){
-       
-       for(o=0;o<n;o++){
-       soma=soma+matrizy[x][o];
-      
-       }
-          
-       soma=soma/anguloy[x][x1];
-       
-       matrizy[x][x1]=soma*-1;
-       matrizy[x1][x]=soma;
-       
-       matriz1y[x][x1]=0;
-       matriz1y[x1][x]=0;
+for j, val_y in enumerate(Y_reactions):
+    if val_y == 1:
+        Y_reactions[j] = round(R[0], 2)
+        R.pop(0)
 
-       if(anguloy[x][x1]>0 && anguloy[x][x1]<1){
-         matrizx[x][x1]=matrizy[x][x1]*angulox[x][x1];
-         matrizx[x1][x]=matrizx[x][x1]*-1;
-         matriz1x[x1][x]=0;
-         matriz1x[x][x1]=0;
-       }
-       
-       
-     }
-   }
-     
-   }
-   xx=0;
-   yy=0;
-   test=0;
-   soma=0;
+joints["RX"] = X_reactions
+joints["RY"] = Y_reactions
 
-   for(y2=0;y2<n;y2++){
-     if(matriz1x[x][y2]==0){
-       yy++;
-     }
-     
-     if(matriz1x[x][y2]==1){
-       
-       xx++;
-       
-     }
-   }
-   
-   if(xx==1 && yy>0){
-     test=1;
-   }
-   else{
-     test=0;
-   }
-   
-   if(test==1){
-   for(x2=0;x2<n;x2++){
-     if(matriz1x[x][x2]==1){
-       
-       for(o2=0;o2<n;o2++){
-       
-       soma=soma+matrizx[x][o2];
-      
-       }
-       
-        
-       soma=soma/angulox[x][x2];
-      
-     
-       matrizx[x][x2]=soma*-1;
-       matrizx[x2][x]=soma;
-       matriz1x[x][x2]=0;
-       matriz1x[x2][x]=0;
+joints.set_index("Joint", inplace=True)
 
-       
-       
-       if(angulox[x][x2]>0 && angulox[x][x2]<1){
-         matrizy[x][x2]=matrizx[x][x2]*anguloy[x][x2];
-         matrizy[x2][x]=matrizy[x][x2]*-1;
-         matriz1y[x][x2]=0;
-         matriz1y[x2][x]=0;
-       }
-       
-     }
-   }
-     
-   }
-   xx=0;
-   yy=0;
-   test=0;
-   soma=0;
-   
-   }
-}
-  
-  printf("%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f",matrizy[0][0],
-matrizy[0][1],
-matrizy[0][2],
-matrizy[1][0],
-matrizy[1][1],
-matrizy[1][2],
-matrizy[2][0],
-matrizy[2][1],
-matrizx[0][2],
-matrizx[2][0]
+# Resolver elementos
+elements["Name"] = [a + b for a, b in zip(elements["Start"], elements["End"])]  # Nome de duas letras
+elements["Value"] = [None] * len(elements)  # Valores iniciais
+
+letters = Counter(elements["Start"].tolist() + elements["End"].tolist())  # Contagem de elementos por nó
+
+sorted_letters = sorted(letters.items(), key=operator.itemgetter(1))  # Ordenar os nós pelo número de elementos
+
+sorted_letters = [list(ele) for ele in sorted_letters]  # Converter para lista de tuplas
+
+while None in elements["Value"].tolist():
+    joint = sorted_letters[0][0]  # Nó com menos incógnitas
+    e_forces = []  # Lista para salvar os elementos conectados ao nó
+
+    # Encontrar os elementos conectados ao nó e que também são incógnitas
+    for i in range(len(elements)):
+        if joint in elements["Name"][i] and elements["Value"][i] is None:
+            e_forces.append(elements["Name"][i])
+
+    # Encontrar os ângulos para cada elemento
+    if len(e_forces) == 2:
+        angles = []
+        for point in e_forces:
+            y = joints.loc[point.replace(joint, "")]["Y"] - joints.loc[joint]["Y"]  # Componente Y do vetor posição
+            x = joints.loc[point.replace(joint, "")]["X"] - joints.loc[joint]["X"]  # Componente X do vetor posição
+
+            if x < 0:
+                angles.append(math.atan(y / x) + math.pi)
+            elif x > 0:
+                angles.append(math.atan(y / x))
+            else:
+                if y > 0:
+                    angles.append(math.pi / 2)
+                else:
+                    angles.append(-math.pi / 2)
+
+            # Reduzir o número de incógnitas por nó
+            for i in range(len(sorted_letters)):
+                if point.replace(joint, "") == sorted_letters[i][0]:
+                    sorted_letters[i][1] -= 1
+
+        # Lado esquerdo das equações de equilíbrio de forças
+        left_x = [math.cos(angles[0]), math.cos(angles[1])]
+        left_y = [math.sin(angles[0]), math.sin(angles[1])]
+
+        # Lado direito das equações de equilíbrio de forças
+        right_x = -(joints.loc[joint]["RX"] + joints.loc[joint]["FX"])
+        right_y = -(joints.loc[joint]["RY"] + joints.loc[joint]["FY"])
+
+        a = np.array([left_x, left_y])  # Lado esquerdo do sistema de equações
+        b = np.array([right_x, right_y])  # Lado direito do sistema de equações
+
+        R = np.linalg.solve(a, b).tolist()  # Solução das forças
+        result = R.copy()
+
+        elements_forces = [tuple(x) for x in list(zip(e_forces, R))]  # Tupla de elemento e sua força
+
+        for i in e_forces:
+            for j, values in enumerate(elements["Name"].tolist()):
+                if i == values:
+                    elements["Value"][j] = round(result[0], 2)
+                    result.pop(0)
+
+    else:
+        angles = []
+        y = joints.loc[e_forces[0].replace(joint, "")]["Y"] - joints.loc[joint]["Y"]
+        x = joints.loc[e_forces[0].replace(joint, "")]["X"] - joints.loc[joint]["X"]
+
+        if x < 0:
+            angles.append(math.atan(y / x) + math.pi)
+        elif x > 0:
+            angles.append(math.atan(y / x))
+        else:
+            if y > 0:
+                angles.append(math.pi / 2)
+            else:
+                angles.append(-math.pi / 2)
+
+        for i in range(len(sorted_letters)):
+            if e_forces[0].replace(joint, "") == sorted_letters[i][0]:
+                sorted_letters[i][1] -= 1
+
+        if angles[0] == 0:
+            a = np.array([[math.cos(angles[0])]])  # Lado esquerdo do sistema de equações
+            b = np.array([-(joints.loc[joint]["RX"] + joints.loc[joint]["FX"])])  # Lado direito do sistema de equações
+
+            result = np.linalg.solve(a, b)[0]  # Solução das forças
+
+        else:
+            a = np.array([[math.sin(angles[0])]])  # Lado esquerdo do sistema de equações
+            b = np.array([-(joints.loc[joint]["RY"] + joints.loc[joint]["FY"])])  # Lado direito do sistema de equações
+
+            R = np.linalg.solve(a, b)[0]  # Solução das forças
+            result = R
+
+            elements_forces = (e_forces[0], R)
+
+        for j, values in enumerate(elements["Name"].tolist()):
+            if e_forces[0] == values:
+                elements["Value"][j] = round(result, 2)
+
+    # Forças em X e Y para cada nó
+    FX_forces = joints["FX"].tolist()
+    FY_forces = joints["FY"].tolist()
+
+    # Adicionar forças com base na resolução dos elementos para cada nó
+    for point in e_forces:
+        if len(e_forces) == 2:
+            for i, j in enumerate(elements_forces):
+                if point == j[0]:
+                    for k, ind in enumerate(list(joints.index.values)):
+                        if point.replace(joint, "") == ind:
+                            FX_forces[k] = FX_forces[k] - (R[i] * math.cos(angles[i]))
+                            FY_forces[k] = FY_forces[k] - (R[i] * math.sin(angles[i]))
+        else:
+            for k, ind in enumerate(list(joints.index.values)):
+                if point.replace(joint, "") == ind:
+                    FX_forces[k] = FX_forces[k] - (R * math.cos(angles[0]))
+                    FY_forces[k] = FY_forces[k] - (R * math.sin(angles[0]))
+
+    # Substituir as forças no dataframe dos nós
+    joints["FX"] = FX_forces
+    joints["FY"] = FY_forces
+
+    # Ordenar novamente a lista de nós
+    sorted_letters.pop(0)
+    sorted_letters = sorted(sorted_letters, key=operator.itemgetter(1))
+
+print(joints[["RX", "RY"]])
+print(" ")
+print(elements[["Name", "Value"]])
+
+# Ajustar tamanho do quadrado que envolve a treliça
+padding = 2.0  # Valor de espaçamento em relação aos limites da treliça
+x_min = joints['X'].min() - padding
+x_max = joints['X'].max() + padding
+y_min = joints['Y'].min() - padding
+y_max = joints['Y'].max() + padding
+
+# Plotar Truss + Resultados
+plt.figure(figsize=(8, 8))  # Tamanho da figura
+plt.axis([x_min, x_max, y_min, y_max])  # Ajustar limites dos eixos
+
+for i, name in enumerate(elements["Name"]):
+    x_coord = [joints["X"][name[0]], joints["X"][name[1]]]
+    y_coord = [joints["Y"][name[0]], joints["Y"][name[1]]]
+    plt.plot(x_coord, y_coord, "k-")
     
- );
 
-   
-  return 0;
-}
+    
+    if elements["Value"][i] is not None:
+        midpoint_x = mean(x_coord)
+        midpoint_y = mean(y_coord)
+        plt.text(midpoint_x, midpoint_y, str(elements["Value"][i]), color="b", fontsize=12, fontweight="bold")
+        
+        
+        
+        
+        
+        
+       
+
+# Plotar pontos externos
+external_joints = joints[joints["RX"].isnull() & joints["RY"].isnull()]
+plt.plot(external_joints["X"], external_joints["Y"], "bo")
+
+
+
+
+
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.title("Treliça")
+plt.grid(True)
+plt.show()
