@@ -34,7 +34,7 @@ def valx():
     valoresx= [-i for i in nos["FX"].tolist()] 
     return valoresx
 def valy():
-    valoresx= [-i for i in nos["FY"].tolist()] 
+    valoresy= [-i for i in nos["FY"].tolist()] 
     return valoresy
 
 ### funções para definir os indices
@@ -330,8 +330,14 @@ else:
     
 print("\nAs forças em tração estão representadas pela cor vermelha\nAs forças em compressão pela cor azul\nE as forças que são iguais a zero pela cor verde")
 
-plt.xlabel("X")
-plt.ylabel("Y")
-plt.title("Treliça")
-plt.grid(True)
+
+
+for i, nome in enumerate(pontos["Nome"]):
+    coordx = [nos["X"][nome[0]], nos["X"][nome[1]]]
+    coordy = [nos["Y"][nome[0]], nos["Y"][nome[1]]]
+    plt.plot(coordx, coordy, "co-")
+    plt.text(coordx[0], coordy[0], nome[0] , fontsize=11, color = "purple", fontweight="bold")
+    plt.text(coordx[1], coordy[1], nome[1] , fontsize=11, color = "purple", fontweight="bold")
+
+
 plt.show()
