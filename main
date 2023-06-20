@@ -4,12 +4,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from collections import Counter
 from statistics import mean
+from matplotlib.patches import Arrow
 import operator
-
-
-
-
-# Carregar dados
 
 
 ### funções para ler pontos e nos
@@ -67,13 +63,11 @@ def my():
     momentumy = [-a * b for a, b in zip(nos["FY"].tolist(), nos["X"].tolist())]  # Momento das forças FY do outro lado do igual
     return momentumy
 
-    
-
 # Resolver reações
 
 pontos=leiturapontos()     ## chama as funções para definir os pontos e os nos
 nos=leituranos()
-
+pedro=leituranos()
 reacoesx = reacx()        # chama as funções para definir as reações de x e y
 reacoesy = reacy()
 
@@ -81,7 +75,6 @@ indicex = indx()            # chama as funções para definir os indices de x e 
 indicey = indy() 
 
 # Lista de equações
-
 
 eqx=eq_x()         # chama as funções para definir as equações de x e y
 eqy=eq_y()
@@ -304,18 +297,18 @@ def check_intersection(x1, y1, x2, y2, x3, y3, x4, y4):
 intersecao = []  # Lista para armazenar os pares de elementos que se cruzam
 
 # Verificar interseções entre os segmentos de linha dos elementos
-for i, row1 in pontos.iterrows():
-    x1 = nos.loc[row1["Inicio"], "X"]
-    y1 = nos.loc[row1["Inicio"], "Y"]
-    x2 = nos.loc[row1["Fim"], "X"]
-    y2 = nos.loc[row1["Fim"], "Y"]
+for i, w in pontos.iterrows():
+    x1 = nos.loc[w["Inicio"], "X"]
+    y1 = nos.loc[w["Inicio"], "Y"]
+    x2 = nos.loc[w["Fim"], "X"]
+    y2 = nos.loc[w["Fim"], "Y"]
 
-    for j, row2 in pontos.iterrows():
+    for j, w2 in pontos.iterrows():
         if i != j:  # Evitar comparação de um elemento consigo mesmo
-            x3 = nos.loc[row2["Inicio"], "X"]
-            y3 = nos.loc[row2["Inicio"], "Y"]
-            x4 = nos.loc[row2["Fim"], "X"]
-            y4 = nos.loc[row2["Fim"], "Y"]
+            x3 = nos.loc[w2["Inicio"], "X"]
+            y3 = nos.loc[w2["Inicio"], "Y"]
+            x4 = nos.loc[w2["Fim"], "X"]
+            y4 = nos.loc[w2["Fim"], "Y"]
 
             if check_intersection(x1, y1, x2, y2, x3, y3, x4, y4):
                 intersecao.append((i, j))
@@ -331,6 +324,14 @@ else:
 print("\nAs forças em tração estão representadas pela cor vermelha\nAs forças em compressão pela cor azul\nE as forças que são iguais a zero pela cor verde")
 
 
+# Print reactions on the graph
+for index, row in pedro.iterrows():
+    if row["FX"] != 0:
+        plt.arrow(row["X"], row["Y"], 1, 0, width=0.08, color="black")
+        plt.text(((row["X"])+0.5), ((row["Y"])-0.3), row["FX"], color="black", fontsize=12, fontweight="bold")
+    if row["FY"] != 0:
+        plt.arrow(row["X"], row["Y"], 0, -0.7, width=0.1, color="black")
+        plt.text(((row["X"])+0.2), ((row["Y"])-0.5), row["FY"], color="black", fontsize=12, fontweight="bold")
 
 for i, nome in enumerate(pontos["Nome"]):
     coordx = [nos["X"][nome[0]], nos["X"][nome[1]]]
