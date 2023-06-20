@@ -1,95 +1,337 @@
-#include <stdio.h>
-#include <math.h>
-#define PI 3.14
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+import pandas as pd
+from collections import Counter
+from statistics import mean
+import operator
 
-int pontos(char p){
-  int p1;
 
-  if(p=='a' || p=='A'){
-    p1=0;
-  }
-  if(p=='b' || p=='B'){
-    p1=1;
-  }
-  if(p=='c' || p=='C'){
-    p1=2;
-  }
-  if(p=='d' || p=='D'){
-    p1=3;
-  }
-  if(p=='e' || p=='E'){
-    p1=4;
-  }
-  if(p=='f' || p=='F'){
-    p1=5;
-  }
-  return p1;
-}
 
-int main(void) {
-  int m, n,x,y, t1, t2, p1, p2;
-  char pA, pB, di, cb, de;
-  printf("Informe a quantidade de nós que deseja ter na sua treliça: ");
-  scanf("%i", &m);
-  float valores[1][1][m][m], valor=123456, angulo, seno, cosseno;
 
-  // 1 é horizontal
-  // 0 é vertical
-  
-  while(pA!='z' && pA!='Z'){
-  getchar();
-  printf("Informe os pontos da treliça: ");
-  scanf("%c%c", &pA, &pB);
-  if(pA!='z' && pA!='Z'){
-  p1=pontos(pA);
-  p2=pontos(pB);
-  //printf("\n\nP1: %i\n\n", p1);
-  //printf("\n\nP2: %i\n\n", p2);
-  
-  printf("Ele é em diagonal, vertical ou horizontal? ");
-  getchar();
-  scanf("%c", &di);
-  printf("Para baixo ou para cima? ");
-  getchar();
-  scanf("%c", &cb);
-  printf("Para direita ou para esquerda? ");
-  getchar();
-  scanf("%c", &de);
-  printf("Qual o seu valor? ");
-  scanf("%f", &valor); 
+# Carregar dados
 
-  printf("\n%c \t%.2f\n", di, valor);
-  if(di=='d'){
-    printf("Qual o angulo formado? ");
-    scanf("%f", &angulo);
 
-    seno=sin(angulo*PI/180);
-    cosseno=cos(angulo*PI/180);
+### funções para ler pontos e nos
+def leiturapontos():
+    pontos = pd.read_excel("projeto.xlsx", "pontos")  # Elementos da treliça
+    return pontos
 
-    if(valor==123456){
-    if(cb=='c'){
-      valores[1][0][p1][p2]=seno;
-      valores[1][1][p1][p2]=cosseno;
-    }
-    else{
-      valores[1][0][p1][p2]=cosseno;
-      valores[1][1][p1][p2]=seno;
-    }
-    }
-    else{
-      valores[1][0][p1][p2]=valor;
-      valores[1][1][p1][p2]=valor;
-    }
-  }
+def leituranos():
+    nos = pd.read_excel("projeto.xlsx", "nos")  # Elementos da treliça
+    return nos
+
+### funções para definir as reações em x e y
+def reacx():
+    reacoesx = nos["RX"].tolist()  # Reações na direção X
+    return reacoesx
+def reacy():
+    reacoesy = nos["RY"].tolist()  # Reações na direção Y
+    return reacoesy
+
+### funções para definir os valores de x e y
+def valx():
+    valoresx= [-i for i in nos["FX"].tolist()] 
+    return valoresx
+def valy():
+    valoresx= [-i for i in nos["FY"].tolist()] 
+    return valoresy
+
+### funções para definir os indices
+def indx():
+    indicex = [i for i, x in enumerate(reacoesx) if x == 1] #define o indice na posição x
+    return indicex
+def indy():
+    indicey = [i for i, x in enumerate(reacoesy) if x == 1] #define o indice na posição y
+    return indicey
+
+### funções para definir ea equações
+def eq_x():
+    if len(indicex) == 1:  # 2 Rx e 1 Ry
+        eqx = [1, 0, 0]
+    else:  # 1 Rx e 1 Ry
+        eqx = [1, 1, 0]
+    return eqx
+def eq_y():
+    if len(indicex) == 1:  # 2 Rx e 1 Ry
+        eqy = [0, 1, 1]
+    else:  # 1 Rx e 1 Ry
+        eqy = [0, 0, 1]
+    return eqy
+
+### funções para definir momentum
+def mx():
+    momentumx = [a * b for a, b in zip(nos["FX"].tolist(), nos["Y"].tolist())]  # Momento das forças FX do outro lado do igual
+    return momentumx
+def my():
+    momentumy = [-a * b for a, b in zip(nos["FY"].tolist(), nos["X"].tolist())]  # Momento das forças FY do outro lado do igual
+    return momentumy
+
     
-    if(di=='h'){
-      valores[0][1][p1][p2]=valor;     
-    }
-    if(di=='v'){
-      valores[0][0][p1][p2]=valor;
-    }
-  }
-  };
-  
-  return 0;
-}
+
+# Resolver reações
+
+pontos=leiturapontos()     ## chama as funções para definir os pontos e os nos
+nos=leituranos()
+
+reacoesx = reacx()        # chama as funções para definir as reações de x e y
+reacoesy = reacy()
+
+indicex = indx()            # chama as funções para definir os indices de x e y
+indicey = indy() 
+
+# Lista de equações
+
+
+eqx=eq_x()         # chama as funções para definir as equações de x e y
+eqy=eq_y()
+
+valoresx = valx()   # chama as funções para definir os valores de x e y
+valoresy = valy()
+
+momentum = []  # Lista para salvar a equação de momento
+
+for i in indicex:  # Reação em X multiplicada pela distância Y ao nó A: (0,0)
+    momentum.append(-reacoesx[i] * nos["Y"].tolist()[i])
+
+for j in indicey:  # Reação em Y multiplicada pela distância X ao nó A: (0,0)
+    momentum.append(reacoesy[j] * nos["X"].tolist()[j])
+
+momentumx = mx()  
+momentumy = my()  
+
+a = np.array([eqx, eqy, momentum])  # Lado esquerdo do sistema de equações
+b = np.array([sum(valoresx), sum(valoresy), sum(momentumy) + sum(momentumx)])  # Lado direito do sistema de equações
+
+R = np.linalg.solve(a, b).tolist()  # Solução das reações R1, R2 e R3
+print(a, b, R)
+
+# Substituir os valores das reações no dataframe
+for i, valorx in enumerate(reacoesx):
+    if valorx == 1:
+        reacoesx[i] = round(R[0], 2)
+        R.pop(0)
+
+for j, valory in enumerate(reacoesy):
+    if valory == 1:
+        reacoesy[j] = round(R[0], 2)
+        R.pop(0)
+
+nos["RX"] = reacoesx
+nos["RY"] = reacoesy
+
+nos.set_index("No", inplace=True)
+
+# Resolver elementos
+pontos["Nome"] = [a + b for a, b in zip(pontos["Inicio"], pontos["Fim"])]  # Nome de duas letras
+pontos["Valor"] = [None] * len(pontos)  # Valores iniciais
+
+p_nos = Counter(pontos["Inicio"].tolist() + pontos["Fim"].tolist())  # Contagem de elementos por nó
+
+n_pontos = sorted(p_nos.items(), key=operator.itemgetter(1))  # Ordenar os nós pelo número de elementos
+
+n_pontos = [list(ele) for ele in n_pontos]  # Converter para lista de tuplas
+
+while None in pontos["Valor"].tolist():
+    no = n_pontos[0][0]  # Nó com menos incógnitas
+    forcas = []  # Lista para salvar os elementos conectados ao nó
+
+    # Encontrar os elementos conectados ao nó e que também são incógnitas
+    for i in range(len(pontos)):
+        if (no in pontos["Nome"][i]) and pontos["Valor"][i] is None:
+            forcas.append(pontos["Nome"][i])
+
+    # Encontrar os ângulos para cada elemento
+    if len(forcas) == 2:
+        angulos = []
+        for ponto in forcas:
+            y = nos.loc[ponto.replace(no, "")]["Y"] - nos.loc[no]["Y"]  # Componente Y do vetor posição
+            x = nos.loc[ponto.replace(no, "")]["X"] - nos.loc[no]["X"]  # Componente X do vetor posição
+
+            if x < 0:
+                angulos.append(math.atan(y / x) + math.pi)
+            elif x > 0:
+                angulos.append(math.atan(y / x))
+            else:
+                if y > 0:
+                    angulos.append(math.pi / 2)
+                else:
+                    angulos.append(-math.pi / 2)
+
+            # Reduzir o número de incógnitas por nó
+            for i in range(len(n_pontos)):
+                if ponto.replace(no, "") == n_pontos[i][0]:
+                    n_pontos[i][1] -= 1
+
+        # Lado esquerdo das equações de equilíbrio de forças
+        esquerdax = [math.cos(angulos[0]), math.cos(angulos[1])]
+        esquerday = [math.sin(angulos[0]), math.sin(angulos[1])]
+
+        # Lado direito das equações de equilíbrio de forças
+        direitax = -(nos.loc[no]["RX"] + nos.loc[no]["FX"])
+        direitay = -(nos.loc[no]["RY"] + nos.loc[no]["FY"])
+
+        a = np.array([esquerdax, esquerday])  # Lado esquerdo do sistema de equações
+        b = np.array([direitax, direitay])  # Lado direito do sistema de equações
+
+        R = np.linalg.solve(a, b).tolist()  # Solução das forças
+        result = R.copy()
+
+        p_forcas = [tuple(x) for x in list(zip(forcas, R))]  # Tupla de elemento e sua força
+
+        for i in forcas:
+            for j, valores in enumerate(pontos["Nome"].tolist()):
+                if i == valores:
+                    pontos["Valor"][j] = round(result[0], 2)
+                    result.pop(0)
+
+    else:
+        angulos = []
+        y = nos.loc[forcas[0].replace(no, "")]["Y"] - nos.loc[no]["Y"]
+        x = nos.loc[forcas[0].replace(no, "")]["X"] - nos.loc[no]["X"]
+
+        if x < 0:
+            angulos.append(math.atan(y / x) + math.pi)
+        elif x > 0:
+            angulos.append(math.atan(y / x))
+        else:
+            if y > 0:
+                angulos.append(math.pi / 2)
+            else:
+                angulos.append(-math.pi / 2)
+
+        for i in range(len(n_pontos)):
+            if forcas[0].replace(no, "") == n_pontos[i][0]:
+                n_pontos[i][1] -= 1
+
+        if angulos[0] == 0:
+            a = np.array([[math.cos(angulos[0])]])  # Lado esquerdo do sistema de equações
+            b = np.array([-(nos.loc[no]["RX"] + nos.loc[no]["FX"])])  # Lado direito do sistema de equações
+
+            result = np.linalg.solve(a, b)[0]  # Solução das forças
+
+        else:
+            a = np.array([[math.sin(angulos[0])]])  # Lado esquerdo do sistema de equações
+            b = np.array([-(nos.loc[no]["RY"] + nos.loc[no]["FY"])])  # Lado direito do sistema de equações
+
+            R = np.linalg.solve(a, b)[0]  # Solução das forças
+            result = R
+
+            p_forcas = (forcas[0], R)
+
+        for j, valores in enumerate(pontos["Nome"].tolist()):
+            if forcas[0] == valores:
+                pontos["Valor"][j] = round(result, 2)
+
+    # Forças em X e Y para cada nó
+    forcas_FX = nos["FX"].tolist()
+    forcas_FY = nos["FY"].tolist()
+
+    # Adicionar forças com base na resolução dos elementos para cada nó
+    for ponto in forcas:
+        if len(forcas) == 2:
+            for i, j in enumerate(p_forcas):
+                if ponto == j[0]:
+                    for k, ind in enumerate(list(nos.index.values)):
+                        if ponto.replace(no, "") == ind:
+                            forcas_FX[k] = forcas_FX[k] - (R[i] * math.cos(angulos[i]))
+                            forcas_FY[k] = forcas_FY[k] - (R[i] * math.sin(angulos[i]))
+        else:
+            for k, ind in enumerate(list(nos.index.values)):
+                if ponto.replace(no, "") == ind:
+                    forcas_FX[k] = forcas_FX[k] - (R * math.cos(angulos[0]))
+                    forcas_FY[k] = forcas_FY[k] - (R * math.sin(angulos[0]))
+
+    # Substituir as forças no dataframe dos nós
+    nos["FX"] = forcas_FX
+    nos["FY"] = forcas_FY
+
+    # Ordenar novamente a lista de nós
+    n_pontos.pop(0)
+    n_pontos = sorted(n_pontos, key=operator.itemgetter(1))
+
+print(nos[["RX", "RY"]])
+print(" ")
+print(pontos[["Nome", "Valor"]])
+
+# Ajustar tamanho do quadrado que envolve a treliça
+padding = 2.0  # Valor de espaçamento em relação aos limites da treliça
+x_min = nos['X'].min() - padding
+x_max = nos['X'].max() + padding
+y_min = nos['Y'].min() - padding
+y_max = nos['Y'].max() + padding
+
+# Plotar Truss + Resultados
+plt.figure(figsize=(8, 8))  # Tamanho da figura
+plt.axis([x_min, x_max, y_min, y_max])  # Ajustar limites dos eixos
+
+for i, nome in enumerate(pontos["Nome"]):
+    coordx = [nos["X"][nome[0]], nos["X"][nome[1]]]
+    coordy = [nos["Y"][nome[0]], nos["Y"][nome[1]]]
+    
+    valor = pontos["Valor"][i]
+    
+    if valor is not None:
+        secaox = mean(coordx)
+        secaoy = mean(coordy)
+        
+        if valor > 0:
+            cor = "blue"
+        elif valor < 0:
+            cor = "red"
+        else:
+            cor = "green"
+        
+        plt.text(secaox, secaoy, str(valor), color=cor, fontsize=12, fontweight="bold")
+        
+    plt.plot(coordx, coordy, "k-")
+       
+# Função para verificar a interseção de dois segmentos de linha, ela recebe as coordenadas de dois elementos para teste
+def check_intersection(x1, y1, x2, y2, x3, y3, x4, y4):
+    # Cálculo da orientação dos pontos
+    def orientation(x1, y1, x2, y2, x3, y3):
+        return (y2 - y1) * (x3 - x2) - (y3 - y2) * (x2 - x1)
+
+    # Verificar se as orientações são diferentes e se os segmentos de linha se cruzam utilizando a formula do produto cruzado  para dois vetores bidimensionais, formula = ax*by-ay*bx
+    if (
+        orientation(x1, y1, x2, y2, x3, y3) * orientation(x1, y1, x2, y2, x4, y4) < 0
+        and orientation(x3, y3, x4, y4, x1, y1) * orientation(x3, y3, x4, y4, x2, y2) < 0 #verifica se as orientações dos segmentos de linha são diferentes e se os segmentos de linha se cruzam usando o teste de interseção baseado em orientação
+    ):
+        return True
+    else:
+        return False
+
+intersecao = []  # Lista para armazenar os pares de elementos que se cruzam
+
+# Verificar interseções entre os segmentos de linha dos elementos
+for i, row1 in pontos.iterrows():
+    x1 = nos.loc[row1["Inicio"], "X"]
+    y1 = nos.loc[row1["Inicio"], "Y"]
+    x2 = nos.loc[row1["Fim"], "X"]
+    y2 = nos.loc[row1["Fim"], "Y"]
+
+    for j, row2 in pontos.iterrows():
+        if i != j:  # Evitar comparação de um elemento consigo mesmo
+            x3 = nos.loc[row2["Inicio"], "X"]
+            y3 = nos.loc[row2["Inicio"], "Y"]
+            x4 = nos.loc[row2["Fim"], "X"]
+            y4 = nos.loc[row2["Fim"], "Y"]
+
+            if check_intersection(x1, y1, x2, y2, x3, y3, x4, y4):
+                intersecao.append((i, j))
+
+# Imprimir os pares de elementos que se cruzam
+if intersecao:
+    print("\nA treliça não funcionará corretamente, devido ao cruzamento dos seguintes elementos:")
+    for pair in intersecao:
+        print(f"Ponto {pair[0]} e Ponto {pair[1]}")
+else:
+    print("Não há pontos da treliça que se cruzam.")
+    
+print("\nAs forças em tração estão representadas pela cor vermelha\nAs forças em compressão pela cor azul\nE as forças que são iguais a zero pela cor verde")
+
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.title("Treliça")
+plt.grid(True)
+plt.show()
