@@ -12,6 +12,7 @@ import operator
 # Carregar dados
 
 
+### funções para ler pontos e nos
 def leiturapontos():
     pontos = pd.read_excel("projeto.xlsx", "pontos")  # Elementos da treliça
     return pontos
@@ -20,54 +21,72 @@ def leituranos():
     nos = pd.read_excel("projeto.xlsx", "nos")  # Elementos da treliça
     return nos
 
+### funções para definir as reações em x e y
 def reacx():
     reacoesx = nos["RX"].tolist()  # Reações na direção X
     return reacoesx
-
 def reacy():
     reacoesy = nos["RY"].tolist()  # Reações na direção Y
     return reacoesy
+
+### funções para definir os valores de x e y
 def valx():
     valoresx= [-i for i in nos["FX"].tolist()] 
     return valoresx
 def valy():
     valoresx= [-i for i in nos["FY"].tolist()] 
     return valoresy
+
+### funções para definir os indices
 def indx():
     indicex = [i for i, x in enumerate(reacoesx) if x == 1] #define o indice na posição x
     return indicex
 def indy():
     indicey = [i for i, x in enumerate(reacoesy) if x == 1] #define o indice na posição y
     return indicey
+
+### funções para definir ea equações
+def eq_x():
+    if len(indicex) == 1:  # 2 Rx e 1 Ry
+        eqx = [1, 0, 0]
+    else:  # 1 Rx e 1 Ry
+        eqx = [1, 1, 0]
+    return eqx
+def eq_y():
+    if len(indicex) == 1:  # 2 Rx e 1 Ry
+        eqy = [0, 1, 1]
+    else:  # 1 Rx e 1 Ry
+        eqy = [0, 0, 1]
+    return eqy
+
+### funções para definir momentum
 def mx():
     momentumx = [a * b for a, b in zip(nos["FX"].tolist(), nos["Y"].tolist())]  # Momento das forças FX do outro lado do igual
     return momentumx
 def my():
     momentumy = [-a * b for a, b in zip(nos["FY"].tolist(), nos["X"].tolist())]  # Momento das forças FY do outro lado do igual
     return momentumy
+
     
 
 # Resolver reações
 
-pontos=leiturapontos()
+pontos=leiturapontos()     ## chama as funções para definir os pontos e os nos
 nos=leituranos()
 
-reacoesx = reacx()
+reacoesx = reacx()        # chama as funções para definir as reações de x e y
 reacoesy = reacy()
 
-indicex = indx()
+indicex = indx()            # chama as funções para definir os indices de x e y
 indicey = indy() 
 
 # Lista de equações
 
-if len(indicex) == 1:  # 2 Rx e 1 Ry
-    eqx = [1, 0, 0]
-    eqy = [0, 1, 1]
-else:  # 1 Rx e 1 Ry
-    eqx = [1, 1, 0]
-    eqy = [0, 0, 1]
 
-valoresx = valx()
+eqx=eq_x()         # chama as funções para definir as equações de x e y
+eqy=eq_y()
+
+valoresx = valx()   # chama as funções para definir os valores de x e y
 valoresy = valy()
 
 momentum = []  # Lista para salvar a equação de momento
